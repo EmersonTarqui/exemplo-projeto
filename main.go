@@ -31,6 +31,7 @@ func main() {
 
 	// Rotas principais
 	router.HandleFunc("/tasks", TaskController.CreateTask).Methods("POST")
+	router.HandleFunc("/tasks", TaskController.GetTasks).Methods("GET")
 
 	// 4. Start do Servidor
 	fmt.Println("Servidor rodando na porta 8080...")

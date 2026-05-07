@@ -46,3 +46,21 @@ func (tc *TaskController) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(task)
 }
+
+func (tc *TaskController) GetTasks(w http.ResponseWriter, r *http.Request) {
+	// Chamamos o método do Repository para buscar a lista de tarefas no banco.
+	tasks, err := tc.repo.GetTasks()
+
+	// Caso ocorra erro na consulta ao banco, retornamos o status 500 e a mensagem de erro.
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.Response{Message: "Erro ao buscar a lista de tarefas no banco"})
+		return
+	}
+
+	// Se a busca for bem-sucedida, retornamos a lista de tarefas em formato JSON com status 200.
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tasks)
+}
