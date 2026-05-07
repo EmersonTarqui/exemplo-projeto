@@ -18,41 +18,43 @@ func NewTaskRepository(connection *sql.DB) TaskRepository {
 
 // CreateTask insere uma tarefa e retorna o ID gerado
 func (tr *TaskRepository) CreateTask(task model.Task) (int, error) {
-	var id int
-
-	// 1. Preparamos a Query
-	//  Usamos "?" para garantir que o banco receba apenas os valores dos campos, evitando SQL Injection.
+	// Preparamos a Query
 	query, err := tr.connection.Prepare("INSERT INTO tasks (user_id, title, done) VALUES (?, ?, ?)")
 
-	// Se der erro ao preparar a query (ex: erro de escrita no SQL)
 	if err != nil {
 		fmt.Println("Erro ao preparar a query:", err)
 		return 0, err
 	}
 	defer query.Close()
 
-	// 2. Executamos a inserção passando os valores da struct
+	// Executamos a inserção
 	result, err := query.Exec(task.UserID, task.Title, task.Done)
 
-	// Se der erro ao inserir os dados no banco
+	// Se der erro aqui (ex: user_id não existe), ele para na hora e não "gasta" o processo
 	if err != nil {
 		fmt.Println("Erro ao executar a inserção:", err)
 		return 0, err
 	}
 
-	// 3. pegamos o ID gerado através do LastInsertId
-	lastId, err := result.LastInsertId()
+	// VERIFICAÇÃO: Verificamos se o banco realmente inseriu uma linha
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
 
-	// Se der erro ao tentar recuperar o ID que o banco criou
+	if rowsAffected == 0 {
+		return 0, fmt.Errorf("erro: nenhuma linha foi inserida no banco de dados")
+	}
+
+	// Se a linha foi inserida, aí sim pegamos o ID gerado
+	lastId, err := result.LastInsertId()
 	if err != nil {
 		fmt.Println("Erro ao recuperar o ID gerado:", err)
 		return 0, err
 	}
 
-	id = int(lastId)
-
-	// Se der sucesso, devolve o ID da tarefa criada e o erro vazio (nil)
-	return id, nil
+	// Devolve o ID final
+	return int(lastId), nil
 }
 
 func (tr *TaskRepository) GetTasks() ([]model.Task, error) {
