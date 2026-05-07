@@ -88,3 +88,26 @@ func (tc *TaskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(model.Response{Message: "Tarefa atualizada com sucesso!"})
 }
+
+func (tc *TaskController) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	var task model.Task
+
+	// Pegamos o ID que vem no JSON da requisição
+	json.NewDecoder(r.Body).Decode(&task)
+
+	// Chamamos o Repository passando apenas o ID
+	err := tc.repo.DeleteTask(task.ID)
+
+	// Caso o ID não exista ou dê erro no banco
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(model.Response{Message: err.Error()})
+		return
+	}
+
+	// Retorno de sucesso
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.Response{Message: "Tarefa excluída com sucesso!"})
+}

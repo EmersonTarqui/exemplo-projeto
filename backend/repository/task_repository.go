@@ -108,3 +108,30 @@ func (tr *TaskRepository) UpdateTask(task model.Task) error {
 
 	return nil
 }
+
+func (tr *TaskRepository) DeleteTask(id int) error {
+	// Preparamos a Query para deletar a tarefa pelo ID
+	query, err := tr.connection.Prepare("DELETE FROM tasks WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer query.Close()
+
+	// Executamos o comando
+	result, err := query.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	// VERIFICAÇÃO: Verificamos se alguma linha foi realmente excluída
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("não foi possível deletar: tarefa com ID %d não encontrada", id)
+	}
+
+	return nil
+}
