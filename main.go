@@ -4,23 +4,35 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"todo-list-echo/backend/database" // Importa a conexão
+	"todo-list-echo/backend/controller"
+	"todo-list-echo/backend/database"
+	"todo-list-echo/backend/repository"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
-	// Liga o banco de dados
-	database.Connect()
+	// Conexão com o Banco
+	db := database.Connect()
 
-	// Cria o roteador (quem cuida das URLs)
+	// Montagem das Camadas
+	// o Controller recebe direto o Repository
+	TaskRepository := repository.NewTaskRepository(db)
+	TaskController := controller.NewTaskController(TaskRepository)
+
+	// Configuração do Servidor/Roteador
 	router := mux.NewRouter()
 
-	// Rota de teste: quando acessar http://localhost:8080/ping, verá "pong"
+	// Rota de teste simples
 	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "pong")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message": "pong"}`))
 	}).Methods("GET")
 
+	// Rotas principais
+	router.HandleFunc("/tasks", TaskController.CreateTask).Methods("POST")
+
+	// 4. Start do Servidor
 	fmt.Println("Servidor rodando na porta 8080...")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
