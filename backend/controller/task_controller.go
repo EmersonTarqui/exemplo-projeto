@@ -64,3 +64,27 @@ func (tc *TaskController) GetTasks(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(tasks)
 }
+
+func (tc *TaskController) UpdateTask(w http.ResponseWriter, r *http.Request) {
+	var task model.Task
+
+	// Pegamos o JSON que você enviou no Thunder Client e transformamos na struct task
+	json.NewDecoder(r.Body).Decode(&task)
+
+	// Chamamos o método do Repository que acabamos de criar no Passo 1
+	err := tc.repo.UpdateTask(task)
+
+	// Caso o banco dê erro, avisamos o usuário
+	if err != nil {
+		// Se cair aqui, pode ser erro de conexão ou o erro "não encontrada"
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound) // Mudamos para 404 (Não encontrado)
+		json.NewEncoder(w).Encode(model.Response{Message: err.Error()})
+		return
+	}
+
+	// Se tudo deu certo, retornamos status 200 (OK) e uma mensagem
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(model.Response{Message: "Tarefa atualizada com sucesso!"})
+}

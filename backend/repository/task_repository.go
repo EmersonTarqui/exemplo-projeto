@@ -80,3 +80,31 @@ func (tr *TaskRepository) GetTasks() ([]model.Task, error) {
 
 	return tasks, nil
 }
+
+func (tr *TaskRepository) UpdateTask(task model.Task) error {
+	// Preparamos a Query
+	query, err := tr.connection.Prepare("UPDATE tasks SET done = ? WHERE id = ?")
+	if err != nil {
+		return err
+	}
+	defer query.Close()
+
+	// Executamos a alteração
+	result, err := query.Exec(task.Done, task.ID)
+	if err != nil {
+		return err
+	}
+
+	// VERIFICAÇÃO: Perguntamos ao banco quantas linhas foram alteradas
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// Se o banco disser que 0 linhas foram alteradas, significa que o ID não existe
+	if rowsAffected == 0 {
+		return fmt.Errorf("tarefa com ID %d não encontrada", task.ID)
+	}
+
+	return nil
+}
